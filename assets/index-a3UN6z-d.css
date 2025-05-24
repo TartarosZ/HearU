@@ -1,0 +1,1 @@
+@tailwind base;@tailwind components;@tailwind utilities;body{background:linear-gradient(to top,#cef,#fff);background-size:200% auto;animation:skyMove 60s linear infinite}@keyframes skyMove{0%{background-position:0 0}to{background-position:-1000px 0}}
