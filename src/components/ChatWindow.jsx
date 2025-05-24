@@ -1,49 +1,88 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 export default function ChatWindow() {
-  const [input, setInput] = useState('');
   const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [isStreaming, setIsStreaming] = useState(false);
 
   const handleSend = async () => {
-    const newMessages = [...messages, { role: 'user', content: input }];
+    if (!input.trim()) return;
+    const userMessage = { role: 'user', content: input };
+    const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput('');
+    setIsStreaming(true);
 
-    const res = await fetch('/chat', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: newMessages })
-    });
+    try {
+      const response = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: newMessages })
+      });
 
-    if (!res.ok) return alert('Request Failed');
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let botMessage = '';
 
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let content = '';
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      content += decoder.decode(value);
-      setMessages([...newMessages, { role: 'assistant', content }]);
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        for (const line of chunk.split('\n')) {
+          if (line.startsWith('data:')) {
+            const data = line.replace(/^data:\s*/, '');
+            if (data === '[DONE]') break;
+
+            try {
+              const json = JSON.parse(data);
+              const delta = json.choices?.[0]?.delta?.content;
+              if (delta) {
+                botMessage += delta;
+                setMessages((prev) => {
+                  const last = prev[prev.length - 1];
+                  if (last?.role === 'assistant') {
+                    return [...prev.slice(0, -1), { role: 'assistant', content: botMessage }];
+                  } else {
+                    return [...prev, { role: 'assistant', content: botMessage }];
+                  }
+                });
+              }
+            } catch (e) {
+              console.error('Failed：', data);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed：', err);
+    } finally {
+      setIsStreaming(false);
     }
   };
 
   return (
-    <div className="bg-white p-4 rounded shadow">
-      <div className="h-60 overflow-y-auto border p-2 mb-2">
-        {messages.map((m, i) => (
-          <div key={i} className={`mb-1 ${m.role === 'user' ? 'text-right' : 'text-left'}`}>{m.content}</div>
+    <div className="p-4 max-w-xl mx-auto">
+      <div className="bg-white rounded shadow p-4 h-[400px] overflow-y-auto">
+        {messages.map((msg, idx) => (
+          <div key={idx} className={msg.role === 'user' ? 'text-right' : 'text-left'}>
+            <p><strong>{msg.role === 'user' ? 'You' : 'AI'}:</strong> {msg.content}</p>
+          </div>
         ))}
       </div>
-      <div className="flex">
+      <div className="mt-2 flex gap-2">
         <input
+          className="flex-1 border rounded p-2"
           value={input}
-          onChange={e => setInput(e.target.value)}
-          className="flex-1 border p-2 rounded-l"
-          placeholder="Start to talk with Meow"
+          onChange={(e) => setInput(e.target.value)}
+          disabled={isStreaming}
+          placeholder="Type a message..."
         />
-        <button onClick={handleSend} className="bg-green-500 text-white px-4 py-2 rounded-r">
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+          onClick={handleSend}
+          disabled={isStreaming}
+        >
           Send
         </button>
       </div>
