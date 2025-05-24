@@ -19,7 +19,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       <div className="max-w-xl mx-auto">
-        <h1 className="text-2xl font-bold text-center mb-4">🧠 心理陪伴 AI</h1>
+        <h1 className="text-2xl font-bold text-center mb-4">I Can Hear U</h1>
         {authed ? <ChatWindow /> : <Login onLoginSuccess={() => setAuthed(true)} />}
       </div>
     </div>
