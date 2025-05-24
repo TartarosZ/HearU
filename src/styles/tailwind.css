@@ -1,3 +1,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+body {
+  background: linear-gradient(to top, #cceeff 0%, #ffffff 100%);
+  background-size: 200% auto;
+  animation: skyMove 60s linear infinite;
+}
+
+@keyframes skyMove {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: -1000px 0;
+  }
+}
