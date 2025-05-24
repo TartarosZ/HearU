@@ -9,17 +9,22 @@ function App() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const token = localStorage.getItem("auth_token");
+    if (token) setAuthenticated(true);
+  }, []);
+
   const handleLogin = async () => {
     const res = await fetch(`${API_BASE}/api/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password }),
-      credentials: "include",
     });
 
     try {
       const data = await res.json();
-      if (data.success) {
+      if (data.success && data.token) {
+        localStorage.setItem("auth_token", data.token);
         setAuthenticated(true);
       } else {
         alert("Wrong password");
@@ -30,17 +35,11 @@ function App() {
     }
   };
 
-  useEffect(() => {
-    fetch(`${API_BASE}/api/check`, {
-      credentials: "include",
-    })
-      .then((res) => res.json())
-      .then((data) => setAuthenticated(data.authenticated))
-      .catch((err) => console.error("Check failed", err));
-  }, []);
-
   const handleSend = async () => {
     if (!input.trim()) return;
+    const token = localStorage.getItem("auth_token");
+    if (!token) return alert("Not authenticated");
+
     const newMessages = [...messages, { role: "user", content: input }];
     setMessages(newMessages);
     setInput("");
@@ -49,9 +48,11 @@ function App() {
     try {
       const res = await fetch(`${API_BASE}/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ messages: newMessages }),
-        credentials: "include",
       });
 
       const reader = res.body.getReader();
