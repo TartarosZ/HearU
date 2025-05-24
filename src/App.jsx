@@ -92,7 +92,7 @@ function App() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-100 to-white">
         <div className="bg-white shadow-md p-8 rounded-xl">
-          <h1 className="text-2xl font-bold mb-4">🔒 Enter Access Password</h1>
+          <h1 className="text-2xl font-bold mb-4">Enter Access Password</h1>
           <input
             type="password"
             value={password}
@@ -113,7 +113,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-100 to-white p-6">
-      <h2 className="text-2xl font-bold mb-4">🧠 AI Agent Chat</h2>
+      <h2 className="text-2xl font-bold mb-4">Talk with Meow</h2>
       <div className="border p-4 bg-white rounded h-[60vh] overflow-y-scroll mb-4">
         {messages.map((msg, idx) => (
           <div key={idx} className={msg.role === "user" ? "text-right" : "text-left text-blue-600"}>
